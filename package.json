@@ -1,19 +1,19 @@
 {
   "name": "edge-hub-connector",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
-  "description": "Minimal Azure IoT Edge ModuleClient connectivity test for Edge Hub 1.6 and Node.js 24",
+  "description": "Azure IoT Edge ModuleClient connectivity test for Edge Hub 1.6 using AMQP",
   "main": "src/connect.js",
   "scripts": {
     "start": "node src/connect.js",
-    "raw-mqtt": "node src/raw-mqtt.js"
+    "raw-mqtt": "node src/raw-mqtt.js",
+    "amqp": "node src/connect.js"
   },
   "engines": {
     "node": ">=24"
   },
   "dependencies": {
     "azure-iot-device": "1.18.4",
-    "azure-iot-device-mqtt": "1.16.4",
-    "mqtt": "4.3.8"
+    "azure-iot-device-amqp": "1.13.1"
   }
 }
