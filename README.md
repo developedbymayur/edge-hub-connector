@@ -2,7 +2,7 @@
 
 This package provides Node-RED nodes for communicating with the local Azure IoT Edge Hub using the Azure IoT Node.js SDK over AMQP.
 
-It was developed as an AMQP-based replacement for the older MQTT-based Azure IoT Edge Node-RED integration and has been validated against Azure IoT Edge 1.6.0 and Node-RED 5.0.4.
+It is an AMQP-based replacement for the older MQTT-based Azure IoT Edge Node-RED integration and has been validated against Azure IoT Edge 1.6.0 and Node-RED 5.0.4.
 
 ## Requirements
 
@@ -12,17 +12,23 @@ It was developed as an AMQP-based replacement for the older MQTT-based Azure IoT
 - The module must run as an IoT Edge module so the standard `IOTEDGE_*` environment variables are available.
 - Edge Hub AMQP endpoint must be enabled (the standard EdgeHub deployment exposes port 5671).
 
-No special connection string is required. Authentication is obtained through the standard IoT Edge environment/workload identity flow used by `ModuleClient.fromEnvironment()`.
+No connection string is required. Authentication is obtained through the standard IoT Edge workload identity flow used by `ModuleClient.fromEnvironment()`.
+
+## Shared client and startup behavior
+
+All AMQP nodes in one Node-RED runtime share a single `ModuleClient` connection. Input/output/twin/method nodes only differ by the route, input, output, or method name configured on the node.
+
+The shared client is resilient to startup ordering: if Node-RED starts before EdgeHub is ready, the package keeps retrying the AMQP connection with backoff. If an established connection is lost, the package reconnects and restores registered input, method, and twin listeners without requiring a Node-RED restart.
 
 ## Nodes
 
 ### Edge Client (AMQP)
 
-Creates and keeps the shared Azure IoT Edge `ModuleClient` connected over AMQP. This node is useful when you want an explicit connection/status node in a flow.
+Enables the shared Azure IoT Edge AMQP client and exposes connection status in the flow.
 
 ### Module Input (AMQP)
 
-Receives messages from an EdgeHub input endpoint and emits them into the Node-RED flow.
+Receives messages from a named EdgeHub input endpoint and emits them into the Node-RED flow.
 
 Configure the input name, for example `OpcPublisher` or `SimulatedTemperatureSensor`.
 
@@ -30,7 +36,7 @@ JSON payloads are parsed into JavaScript objects. Non-JSON payloads remain strin
 
 ### Module Output (AMQP)
 
-Sends a Node-RED message to an EdgeHub module output using `sendOutputEvent()`.
+Sends a Node-RED message to a named EdgeHub module output using `sendOutputEvent()`.
 
 For object payloads the message is encoded as JSON. Buffer payloads are sent as UTF-8 text.
 
@@ -46,12 +52,10 @@ Registers a direct-method handler and exposes the incoming method request as a N
 
 The package must be published to the public npm registry and submitted to the Node-RED Flow Library before it can be discovered by the Palette Manager.
 
-Once it is listed, open **Manage palette → Install** in Node-RED and search for this package.
-
 For local testing before publication:
 
 ```bash
-npm install /path/to/node-red-contrib-azure-iot-edge-amqp
+npm install /path/to/developedbymayur-node-red-contrib-azure-iot-edge-amqp-0.5.0.tgz
 ```
 
 Then restart Node-RED.
@@ -71,10 +75,6 @@ The module talks only to the local EdgeHub. EdgeHub is responsible for forwardin
 ## Example flow
 
 See `examples/basic-amqp-flow.json` for a minimal input/output flow.
-
-## Compatibility note
-
-The original MQTT-based Azure IoT Edge Node-RED module path does not work in the tested EdgeHub 1.6 environment used during development. The AMQP path is the validated transport for this package.
 
 ## Development
 
