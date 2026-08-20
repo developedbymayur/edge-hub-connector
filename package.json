@@ -1,8 +1,8 @@
 {
   "name": "edge-hub-connector",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": true,
-  "description": "Azure IoT Edge ModuleClient connectivity test for Edge Hub 1.6 using AMQP",
+  "description": "Azure IoT Edge Node-RED connector for Edge Hub 1.6 using AMQP",
   "main": "src/connect.js",
   "scripts": {
     "start": "node src/connect.js",
@@ -11,6 +11,11 @@
   },
   "engines": {
     "node": ">=24"
+  },
+  "node-red": {
+    "nodes": {
+      "azureiotedgeamqp": "src/node-red-amqp.js"
+    }
   },
   "dependencies": {
     "azure-iot-device": "1.18.4",
