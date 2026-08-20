@@ -1,18 +1,27 @@
 <script type="text/javascript">
 (function() {
-    RED.nodes.registerType('edgeclient-amqp', {
+    const common = {
         category: 'Azure IoT Edge',
-        color: '#d7e6f5',
-        defaults: { name: { value: '' } },
+        color: '#d9e8f5',
+        align: 'right'
+    };
+
+    RED.nodes.registerType('edgeclient-amqp', {
+        ...common,
+        defaults: {
+            name: { value: '' }
+        },
         inputs: 0,
         outputs: 0,
         icon: 'font-awesome/fa-plug',
-        label: function() { return this.name || 'Edge Client (AMQP)'; }
+        paletteLabel: 'Edge Client (AMQP)',
+        label: function() {
+            return this.name || 'Edge Client (AMQP)';
+        }
     });
 
     RED.nodes.registerType('moduleinput-amqp', {
-        category: 'Azure IoT Edge',
-        color: '#d7e6f5',
+        ...common,
         defaults: {
             name: { value: '' },
             input: { value: 'input1', required: true }
@@ -20,12 +29,14 @@
         inputs: 0,
         outputs: 1,
         icon: 'font-awesome/fa-sign-in',
-        label: function() { return this.name || `Module Input (AMQP): ${this.input}`; }
+        paletteLabel: 'Module Input (AMQP)',
+        label: function() {
+            return this.name || `Module Input: ${this.input}`;
+        }
     });
 
     RED.nodes.registerType('moduleoutput-amqp', {
-        category: 'Azure IoT Edge',
-        color: '#d7e6f5',
+        ...common,
         defaults: {
             name: { value: '' },
             output: { value: 'output1', required: true }
@@ -33,22 +44,28 @@
         inputs: 1,
         outputs: 1,
         icon: 'font-awesome/fa-sign-out',
-        label: function() { return this.name || `Module Output (AMQP): ${this.output}`; }
+        paletteLabel: 'Module Output (AMQP)',
+        label: function() {
+            return this.name || `Module Output: ${this.output}`;
+        }
     });
 
     RED.nodes.registerType('moduletwin-amqp', {
-        category: 'Azure IoT Edge',
-        color: '#d7e6f5',
-        defaults: { name: { value: '' } },
+        ...common,
+        defaults: {
+            name: { value: '' }
+        },
         inputs: 1,
         outputs: 1,
         icon: 'font-awesome/fa-exchange',
-        label: function() { return this.name || 'Module Twin (AMQP)'; }
+        paletteLabel: 'Module Twin (AMQP)',
+        label: function() {
+            return this.name || 'Module Twin (AMQP)';
+        }
     });
 
     RED.nodes.registerType('modulemethod-amqp', {
-        category: 'Azure IoT Edge',
-        color: '#d7e6f5',
+        ...common,
         defaults: {
             name: { value: '' },
             method: { value: 'method1', required: true }
@@ -56,7 +73,10 @@
         inputs: 1,
         outputs: 1,
         icon: 'font-awesome/fa-code',
-        label: function() { return this.name || `Module Method (AMQP): ${this.method}`; }
+        paletteLabel: 'Module Method (AMQP)',
+        label: function() {
+            return this.name || `Module Method: ${this.method}`;
+        }
     });
 })();
 </script>
@@ -69,30 +89,41 @@
 </script>
 
 <script type="text/x-red" data-help-name="edgeclient-amqp">
-    <p>Creates the shared Azure IoT Edge ModuleClient using AMQP.</p>
-    <p>Authentication comes from the standard IOTEDGE_* environment variables.</p>
+    <p>Enables the shared Azure IoT Edge AMQP client for the flow.</p>
+    <p>All AMQP nodes in the same Node-RED runtime reuse one client connection.</p>
+    <p>The client automatically retries when EdgeHub is not ready or a connection is lost.</p>
 </script>
 
 <script type="text/x-red" data-template-name="moduleinput-amqp">
     <div class="form-row">
         <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
-        <input type="text" id="node-input-name" placeholder="Module Input">
+        <input type="text" id="node-input-name" placeholder="From EdgeHub">
     </div>
     <div class="form-row">
         <label for="node-input-input"><i class="fa fa-sign-in"></i> Input</label>
-        <input type="text" id="node-input-input" placeholder="input1">
+        <input type="text" id="node-input-input" placeholder="SimulatedTemperatureSensor">
     </div>
+</script>
+
+<script type="text/x-red" data-help-name="moduleinput-amqp">
+    <p>Receives messages from a named EdgeHub module input.</p>
+    <p>JSON payloads are parsed into objects; non-JSON payloads remain strings.</p>
 </script>
 
 <script type="text/x-red" data-template-name="moduleoutput-amqp">
     <div class="form-row">
         <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
-        <input type="text" id="node-input-name" placeholder="Module Output">
+        <input type="text" id="node-input-name" placeholder="ToHub">
     </div>
     <div class="form-row">
         <label for="node-input-output"><i class="fa fa-sign-out"></i> Output</label>
         <input type="text" id="node-input-output" placeholder="output1">
     </div>
+</script>
+
+<script type="text/x-red" data-help-name="moduleoutput-amqp">
+    <p>Sends <code>msg.payload</code> to the named EdgeHub module output.</p>
+    <p>Objects are serialized as JSON; strings and buffers retain their content.</p>
 </script>
 
 <script type="text/x-red" data-template-name="moduletwin-amqp">
@@ -102,13 +133,22 @@
     </div>
 </script>
 
+<script type="text/x-red" data-help-name="moduletwin-amqp">
+    <p>Receives desired-property updates and sends <code>msg.payload</code> as reported properties.</p>
+</script>
+
 <script type="text/x-red" data-template-name="modulemethod-amqp">
     <div class="form-row">
         <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
-        <input type="text" id="node-input-name" placeholder="Module Method">
+        <input type="text" id="node-input-name" placeholder="Method Handler">
     </div>
     <div class="form-row">
         <label for="node-input-method"><i class="fa fa-code"></i> Method</label>
         <input type="text" id="node-input-method" placeholder="method1">
     </div>
+</script>
+
+<script type="text/x-red" data-help-name="modulemethod-amqp">
+    <p>Handles a direct method and exposes the request as a Node-RED message.</p>
+    <p>The next message sent into this node is used as the method response.</p>
 </script>
