@@ -2,13 +2,13 @@
   "name": "edge-hub-connector",
   "version": "0.1.0",
   "private": true,
-  "description": "Minimal Azure IoT Edge ModuleClient connectivity test for Edge Hub 1.6",
+  "description": "Minimal Azure IoT Edge ModuleClient connectivity test for Edge Hub 1.6 and Node.js 24",
   "main": "src/connect.js",
   "scripts": {
     "start": "node src/connect.js"
   },
   "engines": {
-    "node": ">=20"
+    "node": ">=24 <25"
   },
   "dependencies": {
     "azure-iot-device": "1.18.4",
