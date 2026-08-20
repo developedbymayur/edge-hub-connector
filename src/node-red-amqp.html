@@ -6,20 +6,6 @@
         align: 'right'
     };
 
-    RED.nodes.registerType('edgeclient-amqp', {
-        ...common,
-        defaults: {
-            name: { value: '' }
-        },
-        inputs: 0,
-        outputs: 0,
-        icon: 'font-awesome/fa-plug',
-        paletteLabel: 'Edge Client (AMQP)',
-        label: function() {
-            return this.name || 'Edge Client (AMQP)';
-        }
-    });
-
     RED.nodes.registerType('moduleinput-amqp', {
         ...common,
         defaults: {
@@ -30,9 +16,7 @@
         outputs: 1,
         icon: 'font-awesome/fa-sign-in',
         paletteLabel: 'Module Input (AMQP)',
-        label: function() {
-            return this.name || `Module Input: ${this.input}`;
-        }
+        label: function() { return this.name || `Module Input: ${this.input}`; }
     });
 
     RED.nodes.registerType('moduleoutput-amqp', {
@@ -45,23 +29,17 @@
         outputs: 1,
         icon: 'font-awesome/fa-sign-out',
         paletteLabel: 'Module Output (AMQP)',
-        label: function() {
-            return this.name || `Module Output: ${this.output}`;
-        }
+        label: function() { return this.name || `Module Output: ${this.output}`; }
     });
 
     RED.nodes.registerType('moduletwin-amqp', {
         ...common,
-        defaults: {
-            name: { value: '' }
-        },
+        defaults: { name: { value: '' } },
         inputs: 1,
         outputs: 1,
         icon: 'font-awesome/fa-exchange',
         paletteLabel: 'Module Twin (AMQP)',
-        label: function() {
-            return this.name || 'Module Twin (AMQP)';
-        }
+        label: function() { return this.name || 'Module Twin (AMQP)'; }
     });
 
     RED.nodes.registerType('modulemethod-amqp', {
@@ -74,24 +52,9 @@
         outputs: 1,
         icon: 'font-awesome/fa-code',
         paletteLabel: 'Module Method (AMQP)',
-        label: function() {
-            return this.name || `Module Method: ${this.method}`;
-        }
+        label: function() { return this.name || `Module Method: ${this.method}`; }
     });
 })();
-</script>
-
-<script type="text/x-red" data-template-name="edgeclient-amqp">
-    <div class="form-row">
-        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
-        <input type="text" id="node-input-name" placeholder="Edge Client (AMQP)">
-    </div>
-</script>
-
-<script type="text/x-red" data-help-name="edgeclient-amqp">
-    <p>Enables the shared Azure IoT Edge AMQP client for the flow.</p>
-    <p>All AMQP nodes in the same Node-RED runtime reuse one client connection.</p>
-    <p>The client automatically retries when EdgeHub is not ready or a connection is lost.</p>
 </script>
 
 <script type="text/x-red" data-template-name="moduleinput-amqp">
@@ -107,6 +70,7 @@
 
 <script type="text/x-red" data-help-name="moduleinput-amqp">
     <p>Receives messages from a named EdgeHub module input.</p>
+    <p>All AMQP nodes share one resilient EdgeHub connection automatically.</p>
     <p>JSON payloads are parsed into objects; non-JSON payloads remain strings.</p>
 </script>
 
