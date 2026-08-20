@@ -17,7 +17,6 @@ const RED = {
 registerNodes(RED);
 
 const expected = [
-  'edgeclient-amqp',
   'moduletwin-amqp',
   'moduleinput-amqp',
   'moduleoutput-amqp',
@@ -25,6 +24,7 @@ const expected = [
 ];
 
 assert.deepEqual(registered.sort(), expected.sort());
+assert.equal(registered.length, 4);
 assert.equal(typeof manager.acquire, 'function');
 assert.equal(typeof manager.release, 'function');
 assert.equal(typeof manager.addInputListener, 'function');
