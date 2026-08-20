@@ -1,0 +1,114 @@
+<script type="text/javascript">
+(function() {
+    RED.nodes.registerType('edgeclient-amqp', {
+        category: 'Azure IoT Edge',
+        color: '#d7e6f5',
+        defaults: { name: { value: '' } },
+        inputs: 0,
+        outputs: 0,
+        icon: 'font-awesome/fa-plug',
+        label: function() { return this.name || 'Edge Client (AMQP)'; }
+    });
+
+    RED.nodes.registerType('moduleinput-amqp', {
+        category: 'Azure IoT Edge',
+        color: '#d7e6f5',
+        defaults: {
+            name: { value: '' },
+            input: { value: 'input1', required: true }
+        },
+        inputs: 0,
+        outputs: 1,
+        icon: 'font-awesome/fa-sign-in',
+        label: function() { return this.name || `Module Input (AMQP): ${this.input}`; }
+    });
+
+    RED.nodes.registerType('moduleoutput-amqp', {
+        category: 'Azure IoT Edge',
+        color: '#d7e6f5',
+        defaults: {
+            name: { value: '' },
+            output: { value: 'output1', required: true }
+        },
+        inputs: 1,
+        outputs: 1,
+        icon: 'font-awesome/fa-sign-out',
+        label: function() { return this.name || `Module Output (AMQP): ${this.output}`; }
+    });
+
+    RED.nodes.registerType('moduletwin-amqp', {
+        category: 'Azure IoT Edge',
+        color: '#d7e6f5',
+        defaults: { name: { value: '' } },
+        inputs: 1,
+        outputs: 1,
+        icon: 'font-awesome/fa-exchange',
+        label: function() { return this.name || 'Module Twin (AMQP)'; }
+    });
+
+    RED.nodes.registerType('modulemethod-amqp', {
+        category: 'Azure IoT Edge',
+        color: '#d7e6f5',
+        defaults: {
+            name: { value: '' },
+            method: { value: 'method1', required: true }
+        },
+        inputs: 1,
+        outputs: 1,
+        icon: 'font-awesome/fa-code',
+        label: function() { return this.name || `Module Method (AMQP): ${this.method}`; }
+    });
+})();
+</script>
+
+<script type="text/x-red" data-template-name="edgeclient-amqp">
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Edge Client (AMQP)">
+    </div>
+</script>
+
+<script type="text/x-red" data-help-name="edgeclient-amqp">
+    <p>Creates the shared Azure IoT Edge ModuleClient using AMQP.</p>
+    <p>Authentication comes from the standard IOTEDGE_* environment variables.</p>
+</script>
+
+<script type="text/x-red" data-template-name="moduleinput-amqp">
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Module Input">
+    </div>
+    <div class="form-row">
+        <label for="node-input-input"><i class="fa fa-sign-in"></i> Input</label>
+        <input type="text" id="node-input-input" placeholder="input1">
+    </div>
+</script>
+
+<script type="text/x-red" data-template-name="moduleoutput-amqp">
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Module Output">
+    </div>
+    <div class="form-row">
+        <label for="node-input-output"><i class="fa fa-sign-out"></i> Output</label>
+        <input type="text" id="node-input-output" placeholder="output1">
+    </div>
+</script>
+
+<script type="text/x-red" data-template-name="moduletwin-amqp">
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Module Twin">
+    </div>
+</script>
+
+<script type="text/x-red" data-template-name="modulemethod-amqp">
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Module Method">
+    </div>
+    <div class="form-row">
+        <label for="node-input-method"><i class="fa fa-code"></i> Method</label>
+        <input type="text" id="node-input-method" placeholder="method1">
+    </div>
+</script>
