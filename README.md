@@ -16,15 +16,13 @@ No connection string is required. Authentication is obtained through the standar
 
 ## Shared client and startup behavior
 
-All AMQP nodes in one Node-RED runtime share a single `ModuleClient` connection. Input/output/twin/method nodes only differ by the route, input, output, or method name configured on the node.
+All four AMQP nodes in one Node-RED runtime share a single `ModuleClient` connection. Nodes differ only by the route, input, output, or method name configured on the node.
+
+The shared client is internal to the package; there is no separate connection node to place in a flow.
 
 The shared client is resilient to startup ordering: if Node-RED starts before EdgeHub is ready, the package keeps retrying the AMQP connection with backoff. If an established connection is lost, the package reconnects and restores registered input, method, and twin listeners without requiring a Node-RED restart.
 
 ## Nodes
-
-### Edge Client (AMQP)
-
-Enables the shared Azure IoT Edge AMQP client and exposes connection status in the flow.
 
 ### Module Input (AMQP)
 
@@ -55,7 +53,7 @@ The package must be published to the public npm registry and submitted to the No
 For local testing before publication:
 
 ```bash
-npm install /path/to/developedbymayur-node-red-contrib-azure-iot-edge-amqp-0.5.0.tgz
+npm install /path/to/developedbymayur-node-red-contrib-azure-iot-edge-amqp-0.5.1.tgz
 ```
 
 Then restart Node-RED.
