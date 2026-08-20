@@ -1,24 +1,50 @@
 {
-  "name": "edge-hub-connector",
-  "version": "0.3.0",
-  "private": true,
-  "description": "Azure IoT Edge Node-RED connector for Edge Hub 1.6 using AMQP",
-  "main": "src/connect.js",
-  "scripts": {
-    "start": "node src/connect.js",
-    "raw-mqtt": "node src/raw-mqtt.js",
-    "amqp": "node src/connect.js"
+  "name": "@developedbymayur/node-red-contrib-azure-iot-edge-amqp",
+  "version": "0.4.0",
+  "description": "Azure IoT Edge AMQP nodes for Node-RED, validated with Azure IoT Edge 1.6",
+  "main": "src/node-red-amqp.js",
+  "license": "MIT",
+  "keywords": [
+    "node-red",
+    "node-red-contrib",
+    "azure",
+    "azure-iot",
+    "azure-iot-edge",
+    "iot-edge",
+    "amqp"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/developedbymayur/edge-hub-connector.git"
   },
+  "bugs": {
+    "url": "https://github.com/developedbymayur/edge-hub-connector/issues"
+  },
+  "homepage": "https://github.com/developedbymayur/edge-hub-connector#readme",
   "engines": {
-    "node": ">=24"
-  },
-  "node-red": {
-    "nodes": {
-      "azureiotedgeamqp": "src/node-red-amqp.js"
-    }
+    "node": ">=18"
   },
   "dependencies": {
     "azure-iot-device": "1.18.4",
     "azure-iot-device-amqp": "1.13.1"
+  },
+  "scripts": {
+    "test": "node test/smoke-test.js",
+    "pack:check": "npm pack --dry-run"
+  },
+  "files": [
+    "src",
+    "examples",
+    "README.md",
+    "LICENSE"
+  ],
+  "node-red": {
+    "version": ">=5.0.0",
+    "nodes": {
+      "azureiotedgeamqp": "src/node-red-amqp.js"
+    }
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }
