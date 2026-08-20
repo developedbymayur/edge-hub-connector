@@ -1,0 +1,89 @@
+[
+  {
+    "id": "inject-amqp-test",
+    "type": "inject",
+    "z": "edge-amqp-example",
+    "name": "Test telemetry",
+    "props": [
+      {
+        "p": "payload"
+      }
+    ],
+    "repeat": "",
+    "crontab": "",
+    "once": false,
+    "onceDelay": 0.1,
+    "topic": "",
+    "payload": "{\"source\":\"node-red\",\"test\":true}",
+    "payloadType": "json",
+    "x": 180,
+    "y": 120,
+    "wires": [
+      [
+        "module-output-amqp"
+      ]
+    ]
+  },
+  {
+    "id": "module-output-amqp",
+    "type": "moduleoutput-amqp",
+    "z": "edge-amqp-example",
+    "name": "ToHub",
+    "output": "output1",
+    "x": 410,
+    "y": 120,
+    "wires": [
+      [
+        "debug-amqp-output"
+      ]
+    ]
+  },
+  {
+    "id": "debug-amqp-output",
+    "type": "debug",
+    "z": "edge-amqp-example",
+    "name": "Sent",
+    "active": true,
+    "tosidebar": true,
+    "console": false,
+    "tostatus": false,
+    "complete": "true",
+    "targetType": "full",
+    "statusVal": "",
+    "statusType": "auto",
+    "x": 620,
+    "y": 120,
+    "wires": []
+  },
+  {
+    "id": "module-input-amqp",
+    "type": "moduleinput-amqp",
+    "z": "edge-amqp-example",
+    "name": "FromEdgeHub",
+    "input": "input1",
+    "x": 190,
+    "y": 220,
+    "wires": [
+      [
+        "debug-amqp-input"
+      ]
+    ]
+  },
+  {
+    "id": "debug-amqp-input",
+    "type": "debug",
+    "z": "edge-amqp-example",
+    "name": "Received",
+    "active": true,
+    "tosidebar": true,
+    "console": false,
+    "tostatus": false,
+    "complete": "true",
+    "targetType": "full",
+    "statusVal": "",
+    "statusType": "auto",
+    "x": 430,
+    "y": 220,
+    "wires": []
+  }
+]
