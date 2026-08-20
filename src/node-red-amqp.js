@@ -8,16 +8,17 @@ module.exports = function registerNodes(RED) {
         connecting: { fill: 'yellow', shape: 'ring', text: 'Connecting' },
         connected: { fill: 'green', shape: 'dot', text: 'Connected' },
         disconnected: { fill: 'red', shape: 'ring', text: 'Disconnected' },
-        sent: { fill: 'blue', shape: 'dot', text: 'Sending' },
-        received: { fill: 'yellow', shape: 'dot', text: 'Receiving' },
+        sending: { fill: 'blue', shape: 'dot', text: 'Sending' },
+        receiving: { fill: 'yellow', shape: 'dot', text: 'Receiving' },
         error: { fill: 'red', shape: 'dot', text: 'Error' }
     };
 
-    function setStatus(node, value, detail) {
-        node.status(detail ? { ...status[value], text: detail } : status[value]);
+    function setStatus(node, key, detail) {
+        node.status(detail ? { ...status[key], text: detail } : status[key]);
     }
 
-    function bindConnectionStatus(node) {
+    function acquire(node) {
+        manager.acquire();
         const onConnecting = () => setStatus(node, 'connecting');
         const onConnected = () => {
             setStatus(node, 'connected');
@@ -25,7 +26,7 @@ module.exports = function registerNodes(RED) {
         };
         const onDisconnected = () => setStatus(node, 'disconnected');
         const onError = (error) => {
-            setStatus(node, 'error', error?.message || 'Connection error');
+            setStatus(node, 'error', error?.message || 'AMQP error');
             node.error(`AMQP connection error: ${error?.message || error}`);
         };
 
@@ -33,44 +34,41 @@ module.exports = function registerNodes(RED) {
         manager.on('connected', onConnected);
         manager.on('disconnected', onDisconnected);
         manager.on('error', onError);
+        setStatus(node, manager.isConnected() ? 'connected' : 'connecting');
 
-        node.on('close', (done) => {
+        return () => {
             manager.off('connecting', onConnecting);
             manager.off('connected', onConnected);
             manager.off('disconnected', onDisconnected);
             manager.off('error', onError);
             manager.release();
-            done();
-        });
-    }
-
-    function acquire(node) {
-        manager.acquire();
-        bindConnectionStatus(node);
-        setStatus(node, manager.isConnected() ? 'connected' : 'connecting');
+        };
     }
 
     function EdgeClientNode(config) {
         const node = this;
         RED.nodes.createNode(node, config);
-        acquire(node);
+        node._release = acquire(node);
         node.log('Shared AMQP Edge Hub client enabled.');
+        node.on('close', (done) => {
+            node._release();
+            done();
+        });
     }
 
     function ModuleInputNode(config) {
         const node = this;
         RED.nodes.createNode(node, config);
         node.inputName = config.input || 'input1';
-        acquire(node);
-
+        node._release = acquire(node);
         node._listener = (inputName, message) => {
             if (inputName !== node.inputName) return;
-            setStatus(node, 'received');
+            setStatus(node, 'receiving');
             let payload = message.getBytes().toString('utf8');
             try {
                 payload = JSON.parse(payload);
             } catch (_) {
-                // Keep non-JSON payload as a string.
+                // Keep non-JSON payloads as strings.
             }
             node.send({ payload, topic: 'input', input: inputName });
             const client = manager.getClient();
@@ -81,14 +79,11 @@ module.exports = function registerNodes(RED) {
             }
             setStatus(node, 'connected');
         };
-
         node._removeListener = manager.addInputListener(node.inputName, node._listener);
         node.log(`Module input listening: ${node.inputName}`);
-
         node.on('close', (done) => {
-            if (node._removeListener) node._removeListener();
-            setStatus(node, 'disconnected');
-            manager.release();
+            node._removeListener();
+            node._release();
             done();
         });
     }
@@ -97,18 +92,17 @@ module.exports = function registerNodes(RED) {
         const node = this;
         RED.nodes.createNode(node, config);
         node.outputName = config.output || 'output1';
-        acquire(node);
+        node._release = acquire(node);
         node.log(`Module output ready: ${node.outputName}`);
 
         node.on('input', (msg, send, done) => {
-            setStatus(node, 'sent');
+            setStatus(node, 'sending');
             let payload = msg.payload;
             if (Buffer.isBuffer(payload)) payload = payload.toString('utf8');
             const body = typeof payload === 'string' ? payload : JSON.stringify(payload);
             const message = new Message(body);
             message.contentType = 'application/json';
             message.contentEncoding = 'utf-8';
-
             manager.sendOutputEvent(node.outputName, message, (error) => {
                 if (error) {
                     setStatus(node, 'error');
@@ -121,22 +115,26 @@ module.exports = function registerNodes(RED) {
                 if (done) done();
             });
         });
+
+        node.on('close', (done) => {
+            node._release();
+            done();
+        });
     }
 
     function ModuleTwinNode(config) {
         const node = this;
         RED.nodes.createNode(node, config);
-        acquire(node);
-
+        node._release = acquire(node);
         node._desiredListener = (delta) => {
-            setStatus(node, 'received');
+            setStatus(node, 'receiving');
             node.send({ payload: delta, topic: 'desired' });
             setStatus(node, 'connected');
         };
         node._removeDesired = manager.addTwinDesiredListener(node._desiredListener);
 
         node.on('input', (msg, send, done) => {
-            setStatus(node, 'sent');
+            setStatus(node, 'sending');
             manager.reportTwin(msg.payload, (error) => {
                 if (error) {
                     setStatus(node, 'error');
@@ -149,6 +147,12 @@ module.exports = function registerNodes(RED) {
                 if (done) done();
             });
         });
+
+        node.on('close', (done) => {
+            node._removeDesired();
+            node._release();
+            done();
+        });
     }
 
     function ModuleMethodNode(config) {
@@ -156,10 +160,10 @@ module.exports = function registerNodes(RED) {
         RED.nodes.createNode(node, config);
         node.methodName = config.method || 'method1';
         node._pendingResponse = null;
-        acquire(node);
+        node._release = acquire(node);
 
         node._methodHandler = (request, response) => {
-            setStatus(node, 'received');
+            setStatus(node, 'receiving');
             node.log(`Direct method received: ${request.methodName}`);
             node.send({
                 payload: request.payload ?? null,
@@ -199,52 +203,17 @@ module.exports = function registerNodes(RED) {
             if (send) send(msg);
             if (done) done();
         });
-    }
 
-    function closeCleanup(configCleanup) {
-        return (done) => {
-            if (configCleanup) configCleanup();
-            setStatus(this, 'disconnected');
-            done();
-        };
-    }
-
-    // Add per-node cleanup for nodes with extra registrations.
-    const originalModuleInputNode = ModuleInputNode;
-    const originalModuleOutputNode = ModuleOutputNode;
-    const originalModuleTwinNode = ModuleTwinNode;
-    const originalModuleMethodNode = ModuleMethodNode;
-
-    function RegisteredModuleInputNode(config) {
-        originalModuleInputNode.call(this, config);
-    }
-
-    function RegisteredModuleOutputNode(config) {
-        originalModuleOutputNode.call(this, config);
-        this.on('close', (done) => { done(); });
-    }
-
-    function RegisteredModuleTwinNode(config) {
-        originalModuleTwinNode.call(this, config);
-        const node = this;
         node.on('close', (done) => {
-            if (node._removeDesired) node._removeDesired();
-            done();
-        });
-    }
-
-    function RegisteredModuleMethodNode(config) {
-        originalModuleMethodNode.call(this, config);
-        const node = this;
-        node.on('close', (done) => {
-            if (node._removeMethod) node._removeMethod();
+            node._removeMethod();
+            node._release();
             done();
         });
     }
 
     RED.nodes.registerType('edgeclient-amqp', EdgeClientNode);
-    RED.nodes.registerType('moduletwin-amqp', RegisteredModuleTwinNode);
+    RED.nodes.registerType('moduletwin-amqp', ModuleTwinNode);
     RED.nodes.registerType('moduleinput-amqp', ModuleInputNode);
     RED.nodes.registerType('moduleoutput-amqp', ModuleOutputNode);
-    RED.nodes.registerType('modulemethod-amqp', RegisteredModuleMethodNode);
+    RED.nodes.registerType('modulemethod-amqp', ModuleMethodNode);
 };
