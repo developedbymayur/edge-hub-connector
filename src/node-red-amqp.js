@@ -55,6 +55,7 @@ module.exports = function registerNodes(RED) {
             setStatus(node, 'receiving');
             let payload = message.getBytes().toString('utf8');
             try { payload = JSON.parse(payload); } catch (_) {}
+            node.log(`Module input message received: ${inputName}`);
             node.send({ payload, topic: 'input', input: inputName });
             const client = manager.getClient();
             if (client) {
@@ -82,19 +83,23 @@ module.exports = function registerNodes(RED) {
 
         node.on('input', (msg, send, done) => {
             setStatus(node, 'sending');
+            node.log(`Module output message received: ${node.outputName}`);
             let payload = msg.payload;
             if (Buffer.isBuffer(payload)) payload = payload.toString('utf8');
             const body = typeof payload === 'string' ? payload : JSON.stringify(payload);
             const message = new Message(body);
             message.contentType = 'application/json';
             message.contentEncoding = 'utf-8';
+            node.log(`Module output sending via AMQP: ${node.outputName}`);
             manager.sendOutputEvent(node.outputName, message, (error) => {
                 if (error) {
                     setStatus(node, 'error');
                     node.error(`Output send failed: ${error.message}`, msg);
+                    node.log(`Module output send failed: ${node.outputName}`);
                     if (done) done(error);
                     return;
                 }
+                node.log(`Module output sent successfully: ${node.outputName}`);
                 setStatus(node, 'connected');
                 if (send) send(msg);
                 if (done) done();
