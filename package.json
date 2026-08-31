@@ -1,7 +1,7 @@
 {
   "name": "@developedbymayur/node-red-contrib-azure-iot-edge-amqp",
-  "version": "0.5.1",
-  "description": "Azure IoT Edge AMQP nodes for Node-RED with a shared resilient EdgeHub client",
+  "version": "0.6.0",
+  "description": "Azure IoT Edge AMQP and MQTT nodes for Node-RED with shared resilient EdgeHub clients",
   "main": "src/node-red-amqp.js",
   "license": "MIT",
   "keywords": [
@@ -11,7 +11,8 @@
     "azure-iot",
     "azure-iot-edge",
     "iot-edge",
-    "amqp"
+    "amqp",
+    "mqtt"
   ],
   "repository": {
     "type": "git",
@@ -26,10 +27,11 @@
   },
   "dependencies": {
     "azure-iot-device": "1.18.4",
-    "azure-iot-device-amqp": "1.13.1"
+    "azure-iot-device-amqp": "1.13.1",
+    "azure-iot-device-mqtt": "1.16.4"
   },
   "scripts": {
-    "test": "node test/smoke-test.js",
+    "test": "node test/smoke-test.js && node test/mqtt-smoke-test.js",
     "pack:check": "npm pack --dry-run"
   },
   "files": [
@@ -41,7 +43,8 @@
   "node-red": {
     "version": ">=5.0.0",
     "nodes": {
-      "azureiotedgeamqp": "src/node-red-amqp.js"
+      "azureiotedgeamqp": "src/node-red-amqp.js",
+      "azureiotedgemqtt": "src/node-red-mqtt.js"
     }
   },
   "publishConfig": {
