@@ -1,8 +1,8 @@
-# Azure IoT Edge AMQP nodes for Node-RED
+# Azure IoT Edge AMQP and MQTT nodes for Node-RED
 
-This package provides Node-RED nodes for communicating with the local Azure IoT Edge Hub using the Azure IoT Node.js SDK over AMQP.
+This package provides Node-RED nodes for communicating with the local Azure IoT Edge Hub using the Azure IoT Node.js SDK over **AMQP or MQTT**.
 
-It is an AMQP-based replacement for the older MQTT-based Azure IoT Edge Node-RED integration and has been validated against Azure IoT Edge 1.6.0 and Node-RED 5.0.4.
+The MQTT implementation is intended as the replacement path for older Node-RED Azure IoT Edge MQTT integrations that depend on outdated SDKs or fragile MQTT lifecycle handling. It is designed for Azure IoT Edge 1.6.x and Node-RED 5.x.
 
 ## Requirements
 
@@ -10,57 +10,84 @@ It is an AMQP-based replacement for the older MQTT-based Azure IoT Edge Node-RED
 - Node-RED 5.x
 - Node.js 18 or newer
 - The module must run as an IoT Edge module so the standard `IOTEDGE_*` environment variables are available.
-- Edge Hub AMQP endpoint must be enabled (the standard EdgeHub deployment exposes port 5671).
+- For AMQP, Edge Hub AMQP must be enabled (standard port 5671).
+- For MQTT, Edge Hub MQTT must be enabled (standard port 8883).
 
 No connection string is required. Authentication is obtained through the standard IoT Edge workload identity flow used by `ModuleClient.fromEnvironment()`.
 
+## Transport choices
+
+The package exposes two independent node families:
+
+- **AMQP**: `moduletwin-amqp`, `moduleinput-amqp`, `moduleoutput-amqp`, `modulemethod-amqp`
+- **MQTT**: `moduletwin-mqtt`, `moduleinput-mqtt`, `moduleoutput-mqtt`, `modulemethod-mqtt`
+
+The MQTT nodes use Microsoft's `azure-iot-device-mqtt` transport rather than implementing the Edge Hub MQTT protocol directly. This keeps authentication, MQTT topics, twin handling, direct methods, SAS renewal, and transport behavior aligned with the supported Azure IoT Node.js SDK.
+
 ## Shared client and startup behavior
 
-All four AMQP nodes in one Node-RED runtime share a single `ModuleClient` connection. Nodes differ only by the route, input, output, or method name configured on the node.
+All nodes in one transport family within a Node-RED runtime share one `ModuleClient` connection. There is no connection node to place in a flow.
 
-The shared client is internal to the package; there is no separate connection node to place in a flow.
+The shared managers are resilient to startup ordering. If Node-RED starts before Edge Hub is ready, they retry the connection with bounded exponential backoff. If an established connection is lost, they create a fresh client, reconnect through the Edge workload identity flow, and restore registered input, method, and twin listeners.
 
-The shared client is resilient to startup ordering: if Node-RED starts before EdgeHub is ready, the package keeps retrying the AMQP connection with backoff. If an established connection is lost, the package reconnects and restores registered input, method, and twin listeners without requiring a Node-RED restart.
+The MQTT manager specifically listens for the SDK transport `disconnect` event and does not rely on Node-RED or Edge Agent startup ordering for recovery.
 
-## Nodes
+## MQTT nodes
 
-### Module Input (AMQP)
+### Module Input (MQTT)
 
-Receives messages from a named EdgeHub input endpoint and emits them into the Node-RED flow.
+Receives messages from a named Edge Hub module input.
 
 Configure the input name, for example `OpcPublisher` or `SimulatedTemperatureSensor`.
 
 JSON payloads are parsed into JavaScript objects. Non-JSON payloads remain strings.
 
-### Module Output (AMQP)
+### Module Output (MQTT)
 
-Sends a Node-RED message to a named EdgeHub module output using `sendOutputEvent()`.
+Sends `msg.payload` to a named Edge Hub module output using the SDK `sendOutputEvent()` API.
 
-For object payloads the message is encoded as JSON. Buffer payloads are sent as UTF-8 text.
+Object payloads are serialized as JSON. Strings and buffers are sent as UTF-8 content.
 
-### Module Twin (AMQP)
+### Module Twin (MQTT)
 
 Connects to the module twin, emits desired-property updates, and sends `msg.payload` as reported-property updates.
 
-### Module Method (AMQP)
+### Module Method (MQTT)
 
 Registers a direct-method handler and exposes the incoming method request as a Node-RED message. A subsequent input message is used as the method response.
 
-## Installing from the Node-RED Palette Manager
+## Edge Hub MQTT protocol
 
-The package must be published to the public npm registry and submitted to the Node-RED Flow Library before it can be discovered by the Palette Manager.
+The MQTT transport is implemented by Microsoft's Azure IoT Node.js SDK. Relevant Edge Hub protocol endpoints include:
 
-For local testing before publication:
+```text
+Module output:
+devices/<deviceId>/modules/<moduleId>/messages/events/
 
-```bash
-npm install /path/to/developedbymayur-node-red-contrib-azure-iot-edge-amqp-0.5.1.tgz
+Module input:
+devices/<deviceId>/modules/<moduleId>/inputs/<inputName>
+
+Direct methods:
+$iothub/methods/POST/#
+$iothub/methods/res/<status>/?$rid=<requestId>
+
+Twin:
+$iothub/twin/...
 ```
 
-Then restart Node-RED.
+Module output names are supplied to the SDK as the output name, which the MQTT transport maps to Edge Hub's MQTT message properties. The package does not hard-code device IDs, module IDs, SAS credentials, or workload API credentials.
+
+## Authentication
+
+When running as an IoT Edge module, `ModuleClient.fromEnvironment(Mqtt)` uses the standard Edge workload environment and `IotEdgeAuthenticationProvider`. The workload API supplies the trust bundle and signs the SAS material through iotedged.
+
+This means the Node-RED flow does not need a connection string or a manually managed MQTT password.
 
 ## Azure IoT Edge routing
 
-A typical deployment routes module output to the cloud with an EdgeHub route such as:
+The Node-RED module communicates with the local Edge Hub. Edge Hub routes messages locally or upstream according to the deployment's `$edgeHub` routes.
+
+For example, a module output can be routed upstream with a deployment route similar to:
 
 ```json
 {
@@ -68,22 +95,38 @@ A typical deployment routes module output to the cloud with an EdgeHub route suc
 }
 ```
 
-The module talks only to the local EdgeHub. EdgeHub is responsible for forwarding the message upstream to Azure IoT Hub.
+Store-and-forward behavior remains an Edge Hub responsibility; the Node-RED connector does not attempt to replace Edge Hub routing.
 
-## Example flow
+## Example MQTT flow
 
-See `examples/basic-amqp-flow.json` for a minimal input/output flow.
+A minimal flow can be built as:
+
+```text
+Module Input (MQTT: OpcPublisher)
+        |
+        v
+     processing
+        |
+        v
+Module Output (MQTT: output1)
+```
+
+See `examples/basic-mqtt-flow.json` for a minimal example.
 
 ## Development
 
-Run the local package checks with:
+Install dependencies and run:
 
 ```bash
 npm test
 npm run pack:check
 ```
 
-The package only publishes runtime sources, examples, README, and license files.
+The CI workflow tests Node.js 18, 20, 22, and 24 and checks the npm package contents.
+
+## Package contents
+
+The published package includes the runtime sources, examples, README, and license. Both AMQP and MQTT entry points are registered with Node-RED.
 
 ## License
 
