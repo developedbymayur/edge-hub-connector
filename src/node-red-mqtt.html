@@ -1,0 +1,101 @@
+<script type="text/javascript">
+(function() {
+    const common = {
+        category: 'Azure IoT Edge',
+        color: '#d9e8f5',
+        align: 'right'
+    };
+
+    RED.nodes.registerType('moduleinput-mqtt', {
+        ...common,
+        defaults: { name: { value: '' }, input: { value: 'input1', required: true } },
+        inputs: 0, outputs: 1,
+        icon: 'font-awesome/fa-sign-in',
+        paletteLabel: 'Module Input (MQTT)',
+        label: function() { return this.name || `Module Input: ${this.input}`; }
+    });
+
+    RED.nodes.registerType('moduleoutput-mqtt', {
+        ...common,
+        defaults: { name: { value: '' }, output: { value: 'output1', required: true } },
+        inputs: 1, outputs: 1,
+        icon: 'font-awesome/fa-sign-out',
+        paletteLabel: 'Module Output (MQTT)',
+        label: function() { return this.name || `Module Output: ${this.output}`; }
+    });
+
+    RED.nodes.registerType('moduletwin-mqtt', {
+        ...common,
+        defaults: { name: { value: '' } },
+        inputs: 1, outputs: 1,
+        icon: 'font-awesome/fa-exchange',
+        paletteLabel: 'Module Twin (MQTT)',
+        label: function() { return this.name || 'Module Twin (MQTT)'; }
+    });
+
+    RED.nodes.registerType('modulemethod-mqtt', {
+        ...common,
+        defaults: { name: { value: '' }, method: { value: 'method1', required: true } },
+        inputs: 1, outputs: 1,
+        icon: 'font-awesome/fa-code',
+        paletteLabel: 'Module Method (MQTT)',
+        label: function() { return this.name || `Module Method: ${this.method}`; }
+    });
+})();
+</script>
+
+<script type="text/x-red" data-template-name="moduleinput-mqtt">
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="From EdgeHub">
+    </div>
+    <div class="form-row">
+        <label for="node-input-input"><i class="fa fa-sign-in"></i> Input</label>
+        <input type="text" id="node-input-input" placeholder="input1">
+    </div>
+</script>
+<script type="text/x-red" data-help-name="moduleinput-mqtt">
+    <p>Receives messages from a named EdgeHub module input over MQTT.</p>
+    <p>All MQTT nodes share one resilient EdgeHub connection.</p>
+    <p>JSON payloads are parsed into objects; non-JSON payloads remain strings.</p>
+</script>
+
+<script type="text/x-red" data-template-name="moduleoutput-mqtt">
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="ToHub">
+    </div>
+    <div class="form-row">
+        <label for="node-input-output"><i class="fa fa-sign-out"></i> Output</label>
+        <input type="text" id="node-input-output" placeholder="output1">
+    </div>
+</script>
+<script type="text/x-red" data-help-name="moduleoutput-mqtt">
+    <p>Sends <code>msg.payload</code> to the named EdgeHub module output over MQTT.</p>
+    <p>Objects are serialized as JSON; strings and buffers retain their content.</p>
+</script>
+
+<script type="text/x-red" data-template-name="moduletwin-mqtt">
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Module Twin">
+    </div>
+</script>
+<script type="text/x-red" data-help-name="moduletwin-mqtt">
+    <p>Receives desired-property updates and sends <code>msg.payload</code> as reported properties through the EdgeHub MQTT connection.</p>
+</script>
+
+<script type="text/x-red" data-template-name="modulemethod-mqtt">
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Method Handler">
+    </div>
+    <div class="form-row">
+        <label for="node-input-method"><i class="fa fa-code"></i> Method</label>
+        <input type="text" id="node-input-method" placeholder="method1">
+    </div>
+</script>
+<script type="text/x-red" data-help-name="modulemethod-mqtt">
+    <p>Handles a direct method received through EdgeHub MQTT.</p>
+    <p>The next message sent into this node is used as the method response.</p>
+</script>
