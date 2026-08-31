@@ -56,12 +56,6 @@ module.exports = function registerNodes(RED) {
             let payload = message.getBytes().toString('utf8');
             try { payload = JSON.parse(payload); } catch (_) {}
             node.send({ payload, topic: 'input', input: inputName });
-            const client = manager.getClient();
-            if (client) {
-                client.complete(message, (error) => {
-                    if (error) node.error(`Input completion failed: ${error.message}`);
-                });
-            }
             setStatus(node, 'connected');
         };
         node._removeListener = manager.addInputListener(node.inputName, node._listener);
