@@ -1,0 +1,56 @@
+[
+  {
+    "id": "mqtt-input",
+    "type": "moduleinput-mqtt",
+    "z": "mqtt-flow",
+    "name": "From EdgeHub",
+    "input": "OpcPublisher",
+    "x": 180,
+    "y": 100,
+    "wires": [["debug-input"]]
+  },
+  {
+    "id": "debug-input",
+    "type": "debug",
+    "z": "mqtt-flow",
+    "name": "Received",
+    "active": true,
+    "tosidebar": true,
+    "console": false,
+    "tostatus": false,
+    "complete": "payload",
+    "targetType": "msg",
+    "statusVal": "",
+    "statusType": "auto",
+    "x": 410,
+    "y": 100,
+    "wires": []
+  },
+  {
+    "id": "inject-output",
+    "type": "inject",
+    "z": "mqtt-flow",
+    "name": "Send test message",
+    "props": [{"p": "payload"}],
+    "repeat": "",
+    "crontab": "",
+    "once": false,
+    "onceDelay": 0.1,
+    "topic": "",
+    "payload": "{\"source\":\"node-red\",\"transport\":\"mqtt\"}",
+    "payloadType": "json",
+    "x": 170,
+    "y": 180,
+    "wires": [["mqtt-output"]]
+  },
+  {
+    "id": "mqtt-output",
+    "type": "moduleoutput-mqtt",
+    "z": "mqtt-flow",
+    "name": "To EdgeHub",
+    "output": "output1",
+    "x": 430,
+    "y": 180,
+    "wires": []
+  }
+]
